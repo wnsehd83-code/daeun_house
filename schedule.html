@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>다은이네 일정공유</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="schedule.css" />
+  </head>
+  <body>
+    <div class="schedule-app">
+      <header class="schedule-header">
+        <div>
+          <span class="schedule-header__badge">가족 일정</span>
+          <h1>다은이네 일정공유</h1>
+          <p class="schedule-header__sub">아빠 · 엄마 · 다은이 일정을 함께 확인합니다</p>
+        </div>
+        <div class="schedule-header__nav">
+          <button type="button" class="btn btn--ghost" id="calPrev" aria-label="이전 달">‹</button>
+          <h2 id="calTitle" class="cal-title"></h2>
+          <button type="button" class="btn btn--ghost" id="calNext" aria-label="다음 달">›</button>
+          <button type="button" class="btn btn--outline btn--sm" id="calToday">오늘</button>
+        </div>
+      </header>
+
+      <div class="calendar-wrap">
+        <div class="calendar-weekdays" aria-hidden="true">
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div id="calendarGrid" class="calendar-grid" role="grid" aria-label="월별 달력"></div>
+      </div>
+
+      <p class="schedule-legend">
+        <span class="legend-dot legend-dot--dad"></span> 아빠
+        <span class="legend-dot legend-dot--mom"></span> 엄마
+        <span class="legend-dot legend-dot--daeun"></span> 다은이
+        <span class="legend-holiday">공휴일</span>
+      </p>
+    </div>
+
+    <dialog id="dayModal" class="modal">
+      <form id="dayForm" method="dialog" class="modal__inner">
+        <header class="modal__head">
+          <h2 id="modalDateTitle">일정</h2>
+          <button type="button" class="icon-btn" id="closeModal" aria-label="닫기">×</button>
+        </header>
+
+        <ul id="eventList" class="event-list"></ul>
+
+        <section class="event-form" id="eventFormSection">
+          <h3 id="formTitle">일정 추가</h3>
+          <input type="hidden" id="eventId" />
+          <div class="field">
+            <label for="eventTitle">제목</label>
+            <input type="text" id="eventTitle" required placeholder="예: 학교 행사, 병원" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="eventTime">시간</label>
+              <input type="time" id="eventTime" />
+            </div>
+            <div class="field">
+              <label for="eventMember">담당</label>
+              <select id="eventMember">
+                <option value="dad">아빠</option>
+                <option value="mom">엄마</option>
+                <option value="daeun">다은이</option>
+                <option value="family">가족 전체</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="eventMemo">메모</label>
+            <textarea id="eventMemo" rows="2" placeholder="장소, 준비물 등"></textarea>
+          </div>
+          <div class="modal__actions">
+            <button type="button" class="btn btn--ghost" id="cancelEdit" hidden>취소</button>
+            <button type="button" class="btn btn--danger btn--sm" id="deleteEvent" hidden>삭제</button>
+            <button type="submit" class="btn btn--primary" id="saveEvent">저장</button>
+          </div>
+        </section>
+
+        <button type="button" class="btn btn--outline btn--block" id="addNewEvent">+ 이 날 일정 추가</button>
+      </form>
+    </dialog>
+
+    <script src="kr-holidays.js"></script>
+    <script src="schedule.js"></script>
+  </body>
+</html>
