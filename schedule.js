@@ -1,5 +1,3 @@
-const STORAGE_KEY = "daeeun-schedule-v1";
-
 const MEMBERS = {
   dad: { name: "아빠", color: "#1d3557" },
   mom: { name: "엄마", color: "#7b2cbf" },
@@ -14,16 +12,11 @@ let selectedDate = null;
 let editingId = null;
 
 function loadEvents() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 function saveEvents() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+  // 데이터는 현재 열린 화면에서만 유지하고 브라우저 저장소에는 남기지 않습니다.
 }
 
 function pad(n) {

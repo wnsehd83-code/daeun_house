@@ -1,5 +1,3 @@
-const STORAGE_KEY = "daeeun-household-v2";
-
 const INCOME_MEMBERS = [
   { id: "dad", name: "아빠", role: "고정 월급 + 부가소득", color: "#1d3557", hasFixedSalary: true },
   { id: "mom", name: "엄마", role: "고정 월급 + 부가소득", color: "#7b2cbf", hasFixedSalary: true },
@@ -59,74 +57,12 @@ const defaultMonthData = () => ({
   },
 });
 
-function migrateStore(parsed) {
-  if (!parsed.settings) parsed.settings = {};
-  if (!parsed.months) parsed.months = {};
-
-  parsed.settings.budgets = { ...defaultBudgets(), ...parsed.settings.budgets };
-  parsed.settings.recurringExpenses = {
-    ...defaultRecurringExpenses(),
-    ...parsed.settings.recurringExpenses,
-  };
-
-  const monthKeys = Object.keys(parsed.months).sort();
-  for (const cat of RECURRING_EXPENSE_CATS) {
-    if (!parsed.settings.recurringExpenses[cat]?.length) {
-      for (let i = monthKeys.length - 1; i >= 0; i--) {
-        const rows = parsed.months[monthKeys[i]]?.expenses?.[cat];
-        if (rows?.length) {
-          parsed.settings.recurringExpenses[cat] = rows.map((r) => ({
-            label: r.label || "",
-            amount: Number(r.amount) || 0,
-          }));
-          break;
-        }
-      }
-    }
-  }
-
-  for (const monthKey of Object.keys(parsed.months)) {
-    const m = parsed.months[monthKey];
-    if (!m.extraIncome) m.extraIncome = {};
-    if (m.extraIncome.daughter && !m.extraIncome.daeun) {
-      m.extraIncome.daeun = m.extraIncome.daughter;
-      delete m.extraIncome.daughter;
-    }
-    if (!m.expenses) m.expenses = {};
-    for (const cat of Object.keys(EXPENSE_CATEGORIES)) {
-      if (!Array.isArray(m.expenses[cat])) m.expenses[cat] = [];
-    }
-    for (const id of ["dad", "mom"]) {
-      if (!Array.isArray(m.extraIncome[id])) m.extraIncome[id] = [];
-    }
-  }
-  return parsed;
-}
-
 function loadStore() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("daeeun-household-v1");
-    if (!raw) return { settings: defaultSettings(), months: {} };
-    const parsed = migrateStore(JSON.parse(raw));
-    return {
-      settings: {
-        ...defaultSettings(),
-        ...parsed.settings,
-        budgets: { ...defaultBudgets(), ...parsed.settings?.budgets },
-        recurringExpenses: {
-          ...defaultRecurringExpenses(),
-          ...parsed.settings?.recurringExpenses,
-        },
-      },
-      months: parsed.months || {},
-    };
-  } catch {
-    return { settings: defaultSettings(), months: {} };
-  }
+  return { settings: defaultSettings(), months: {} };
 }
 
-function saveStore(store) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+function saveStore() {
+  // 데이터는 현재 열린 화면에서만 유지하고 브라우저 저장소에는 남기지 않습니다.
 }
 
 function formatWon(n) {
@@ -883,9 +819,7 @@ document.getElementById("saveBudget").addEventListener("click", collectBudgetFro
 document.getElementById("exportCsv").addEventListener("click", exportCsv);
 
 document.getElementById("resetData").addEventListener("click", () => {
-  if (!confirm("저장된 모든 가계 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem("daeeun-household-v1");
+  if (!confirm("현재 입력된 모든 가계 데이터를 초기화할까요?")) return;
   store = loadStore();
   showToast("데이터가 초기화되었습니다.");
   renderAll();

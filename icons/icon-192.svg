@@ -1,5 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" fill="none">
-  <rect width="192" height="192" rx="40" fill="#2d6a4f"/>
-  <text x="96" y="108" text-anchor="middle" font-family="sans-serif" font-size="72" font-weight="700" fill="#fff">�</text>
-  <circle cx="96" cy="150" r="8" fill="#d8f3dc"/>
+  <defs>
+    <linearGradient id="sunny" x1="28" y1="20" x2="166" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE88A"/>
+      <stop offset="0.52" stop-color="#FF9F5A"/>
+      <stop offset="1" stop-color="#FF6FAE"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#sunny)"/>
+  <circle cx="54" cy="50" r="18" fill="#FFF8DC" opacity="0.85"/>
+  <text x="96" y="112" text-anchor="middle" font-family="sans-serif" font-size="72" font-weight="700" fill="#fff">집</text>
+  <circle cx="96" cy="150" r="8" fill="#FFF8DC"/>
 </svg>

@@ -1,24 +1,24 @@
 :root {
-  --bg: #f4f6f8;
+  --bg: #fff8ec;
   --surface: #ffffff;
-  --text: #1a2332;
-  --muted: #5c6b7a;
-  --border: #e2e8f0;
-  --accent: #2d6a4f;
-  --accent-soft: #d8f3dc;
+  --text: #3a2a1a;
+  --muted: #7b6a55;
+  --border: #f5d9ae;
+  --accent: #ff8a3d;
+  --accent-soft: #fff0cf;
   --danger: #c1121f;
   --danger-soft: #ffe5e5;
-  --dad: #1d3557;
-  --mom: #7b2cbf;
+  --dad: #2f80ed;
+  --mom: #c061cb;
   --daughter: #e07a5f;
   --fluid: #3a86ff;
-  --investment: #8338ec;
-  --fixed: #fb5607;
-  --daeun: #e07a5f;
+  --investment: #b56cff;
+  --fixed: #ff8a3d;
+  --daeun: #ff6fae;
   --warn: #b45309;
   --warn-soft: #fff8e6;
   --radius: 12px;
-  --shadow: 0 1px 3px rgba(26, 35, 50, 0.08);
+  --shadow: 0 10px 24px rgba(255, 138, 61, 0.08);
 }
 
 *,
@@ -30,7 +30,10 @@
 body {
   margin: 0;
   font-family: "Noto Sans KR", system-ui, sans-serif;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top left, rgba(255, 214, 102, 0.35), transparent 28rem),
+    radial-gradient(circle at top right, rgba(255, 111, 174, 0.22), transparent 24rem),
+    var(--bg);
   color: var(--text);
   line-height: 1.5;
 }
