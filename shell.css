@@ -24,12 +24,14 @@ body {
   font-family: "Noto Sans KR", system-ui, sans-serif;
   background: var(--bg);
   color: #1a2332;
+  -webkit-text-size-adjust: 100%;
 }
 
 .hub {
   display: flex;
   height: 100vh;
   height: 100dvh;
+  min-height: 0;
 }
 
 .sidebar {
@@ -150,6 +152,7 @@ body {
 .main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -199,11 +202,14 @@ body {
   .sidebar {
     width: 100%;
     min-width: 0;
+    flex: 0 0 auto;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    padding: 0.65rem 0.75rem;
+    padding: 0.55rem max(0.75rem, env(safe-area-inset-right)) 0.65rem max(0.75rem, env(safe-area-inset-left));
     gap: 0.5rem;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 138, 61, 0.18);
   }
 
   .sidebar__brand {
@@ -218,18 +224,26 @@ body {
     font-size: 0.95rem;
   }
 
+  .sidebar__badge {
+    display: none;
+  }
+
   .sidebar__nav {
     flex: none;
     flex-direction: row;
     width: 100%;
     order: 3;
     padding: 0;
+    gap: 0.4rem;
+    overflow-x: auto;
   }
 
   .nav-item {
     flex: 1;
     justify-content: center;
-    padding: 0.55rem 0.5rem;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.6rem 0.5rem;
     font-size: 0.8rem;
   }
 
@@ -244,5 +258,16 @@ body {
   .main {
     flex: 1;
     min-height: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .sidebar__title {
+    font-size: 0.88rem;
+  }
+
+  .nav-item {
+    font-size: 0.74rem;
+    letter-spacing: -0.02em;
   }
 }

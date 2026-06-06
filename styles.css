@@ -36,6 +36,7 @@ body {
     var(--bg);
   color: var(--text);
   line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
 }
 
 html.in-hub,
@@ -48,7 +49,7 @@ html.in-hub body {
 .app {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 1.5rem max(1.25rem, env(safe-area-inset-right)) 3rem max(1.25rem, env(safe-area-inset-left));
 }
 
 .header {
@@ -198,6 +199,7 @@ html.in-hub body {
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  min-height: 40px;
   padding: 0.55rem 1rem;
   transition: background 0.15s, opacity 0.15s;
 }
@@ -370,7 +372,7 @@ html.in-hub body {
 .field select {
   width: 100%;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   padding: 0.5rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -548,13 +550,36 @@ html.in-hub body {
 }
 
 @media (max-width: 600px) {
+  .app {
+    padding: 1rem max(0.75rem, env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .header {
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
   .header h1 {
-    font-size: 1.35rem;
+    font-size: 1.28rem;
+    line-height: 1.25;
   }
 
   .header__actions {
     align-items: stretch;
     width: 100%;
+  }
+
+  .header__month {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .month-picker {
+    flex: 1;
+    min-width: 0;
+    font-size: 1rem;
+    text-align: center;
   }
 
   .toolbar {
@@ -565,8 +590,108 @@ html.in-hub body {
     flex: 1;
   }
 
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .summary-card,
+  .card,
+  .panel {
+    padding: 0.9rem;
+  }
+
+  .summary-card__value {
+    font-size: 1.08rem;
+  }
+
+  .charts,
+  .income-grid,
+  .budget-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-wrap {
+    height: 190px;
+  }
+
+  .panel__actions {
+    justify-content: stretch;
+  }
+
+  .panel__actions .btn,
+  .footer .btn {
+    width: 100%;
+  }
+
   .extra-income-row {
-    grid-template-columns: 1fr 100px 32px;
+    grid-template-columns: 1fr;
+  }
+
+  .extra-income-row .icon-btn {
+    justify-self: end;
+    min-width: 44px;
+    min-height: 36px;
+  }
+
+  .expense-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.35rem;
+  }
+
+  .tab {
+    padding-inline: 0.5rem;
+    text-align: center;
+  }
+
+  .expense-table,
+  .expense-table thead,
+  .expense-table tbody,
+  .expense-table tr,
+  .expense-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .expense-table thead {
+    display: none;
+  }
+
+  .expense-table tr {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .expense-table td {
+    padding: 0.2rem 0;
+  }
+
+  .expense-table .col-amount,
+  .expense-table .col-actions {
+    width: 100%;
+  }
+
+  .expense-table .col-actions {
+    text-align: right;
+  }
+
+  .expense-footer,
+  .footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 380px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
+  .header h1 {
+    font-size: 1.18rem;
   }
 }
 

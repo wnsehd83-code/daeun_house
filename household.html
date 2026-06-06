@@ -17,6 +17,9 @@
     />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
   </head>
   <body>
     <script>
@@ -93,7 +96,7 @@
       </section>
 
       <footer class="footer">
-        <span>데이터는 새로고침하면 초기화됩니다</span>
+        <span>데이터는 Firebase에 저장됩니다</span>
         <button type="button" class="btn btn--danger btn--sm" id="resetData">전체 초기화</button>
       </footer>
     </div>

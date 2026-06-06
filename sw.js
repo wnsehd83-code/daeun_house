@@ -1,4 +1,4 @@
-const CACHE = "daeeun-family-hub-v3";
+const CACHE = "daeeun-family-hub-v10";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const ASSETS = [
   "./household.html",
   "./styles.css",
   "./app.js",
+  "./firebase-config.js",
   "./schedule.html",
   "./schedule.css",
   "./schedule.js",

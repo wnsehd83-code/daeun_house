@@ -57,12 +57,134 @@ const defaultMonthData = () => ({
   },
 });
 
+function firebaseDb() {
+  return window.daeunFirebase?.db || null;
+}
+
+function firebaseTimestamp() {
+  return window.firebase?.database?.ServerValue?.TIMESTAMP || Date.now();
+}
+
+function normalizeRows(rows) {
+  const list = Array.isArray(rows) ? rows : Object.values(rows || {});
+  return list
+    .filter(Boolean)
+    .map((row) => ({
+      label: row.label || "",
+      amount: parseAmount(row.amount),
+    }));
+}
+
+function normalizeMonthData(data) {
+  const month = defaultMonthData();
+  const income = data?.income || {};
+  const extraIncome = income.extraIncome || data?.extraIncome || {};
+  const expenses = data?.expenses || {};
+
+  for (const member of INCOME_MEMBERS) {
+    month.extraIncome[member.id] = normalizeRows(extraIncome[member.id]);
+  }
+
+  for (const category of Object.keys(EXPENSE_CATEGORIES)) {
+    month.expenses[category] = normalizeRows(expenses[category]);
+  }
+
+  return month;
+}
+
 function loadStore() {
   return { settings: defaultSettings(), months: {} };
 }
 
+function normalizeRemoteStore(data) {
+  const settings = data?.settings || {};
+  const months = {};
+
+  for (const [monthKey, monthData] of Object.entries(data?.months || {})) {
+    months[monthKey] = normalizeMonthData(monthData);
+  }
+
+  return {
+    settings: {
+      ...defaultSettings(),
+      ...settings,
+      baseSalaries: { ...defaultSettings().baseSalaries, ...settings.baseSalaries },
+      budgets: { ...defaultBudgets(), ...settings.budgets },
+      recurringExpenses: {
+        investment: normalizeRows(settings.recurringExpenses?.investment),
+        fixed: normalizeRows(settings.recurringExpenses?.fixed),
+      },
+    },
+    months,
+  };
+}
+
+function monthToFirebaseData(monthKey) {
+  const month = getMonthData(monthKey);
+  return {
+    income: {
+      baseSalaries: { ...store.settings.baseSalaries },
+      extraIncome: {
+        dad: normalizeRows(month.extraIncome.dad),
+        mom: normalizeRows(month.extraIncome.mom),
+      },
+    },
+    expenses: {
+      fluid: normalizeRows(month.expenses.fluid),
+      investment: normalizeRows(month.expenses.investment),
+      fixed: normalizeRows(month.expenses.fixed),
+    },
+    updatedAt: firebaseTimestamp(),
+  };
+}
+
+function storeToFirebaseData() {
+  const months = {};
+  for (const monthKey of Object.keys(store.months)) {
+    months[monthKey] = monthToFirebaseData(monthKey);
+  }
+
+  return {
+    settings: {
+      baseSalaries: { ...store.settings.baseSalaries },
+      budgets: { ...store.settings.budgets },
+      recurringExpenses: {
+        investment: normalizeRows(store.settings.recurringExpenses?.investment),
+        fixed: normalizeRows(store.settings.recurringExpenses?.fixed),
+      },
+    },
+    months,
+    updatedAt: firebaseTimestamp(),
+  };
+}
+
+async function loadStoreFromFirebase() {
+  const db = firebaseDb();
+  if (!db) return;
+
+  try {
+    const snapshot = await db.ref("household").once("value");
+    if (snapshot.exists()) {
+      store = normalizeRemoteStore(snapshot.val());
+      renderAll();
+    }
+  } catch (err) {
+    console.error(err);
+    showToast("Firebase 데이터를 불러오지 못했습니다.");
+  }
+}
+
 function saveStore() {
-  // 데이터는 현재 열린 화면에서만 유지하고 브라우저 저장소에는 남기지 않습니다.
+  const db = firebaseDb();
+  if (!db) return Promise.resolve();
+
+  return db
+    .ref("household")
+    .set(storeToFirebaseData())
+    .catch((err) => {
+      console.error(err);
+      showToast("Firebase 저장에 실패했습니다.");
+    });
 }
 
 function formatWon(n) {
@@ -819,8 +941,15 @@ document.getElementById("saveBudget").addEventListener("click", collectBudgetFro
 document.getElementById("exportCsv").addEventListener("click", exportCsv);
 
 document.getElementById("resetData").addEventListener("click", () => {
-  if (!confirm("현재 입력된 모든 가계 데이터를 초기화할까요?")) return;
+  if (!confirm("Firebase에 저장된 모든 가계 데이터를 초기화할까요? 이 작업은 되돌릴 수 없습니다.")) return;
   store = loadStore();
+  firebaseDb()
+    ?.ref("household")
+    .remove()
+    .catch((err) => {
+      console.error(err);
+      showToast("Firebase 초기화에 실패했습니다.");
+    });
   showToast("데이터가 초기화되었습니다.");
   renderAll();
 });
@@ -830,3 +959,4 @@ initMonthPicker();
 bindTabs();
 initPwa();
 renderAll();
+loadStoreFromFirebase();

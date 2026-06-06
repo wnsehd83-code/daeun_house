@@ -11,12 +11,72 @@ let viewMonth = new Date().getMonth();
 let selectedDate = null;
 let editingId = null;
 
+function firebaseDb() {
+  return window.daeunFirebase?.db || null;
+}
+
+function firebaseTimestamp() {
+  return window.firebase?.database?.ServerValue?.TIMESTAMP || Date.now();
+}
+
+function normalizeEvents(data) {
+  return Object.entries(data || {})
+    .map(([id, ev]) => ({
+      id: ev.id || id,
+      date: ev.date || "",
+      endDate: ev.endDate || ev.date || "",
+      title: ev.title || "",
+      time: ev.time || "",
+      member: ev.member || "family",
+      memo: ev.memo || "",
+    }))
+    .filter((ev) => ev.date && ev.title);
+}
+
+function eventsToFirebaseData() {
+  return events.reduce((acc, ev) => {
+    acc[ev.id] = {
+      date: ev.date,
+      endDate: ev.endDate || ev.date,
+      title: ev.title,
+      time: ev.time || "",
+      member: ev.member || "family",
+      memo: ev.memo || "",
+      updatedAt: firebaseTimestamp(),
+    };
+    return acc;
+  }, {});
+}
+
 function loadEvents() {
   return [];
 }
 
 function saveEvents() {
-  // 데이터는 현재 열린 화면에서만 유지하고 브라우저 저장소에는 남기지 않습니다.
+  const db = firebaseDb();
+  if (!db) return Promise.resolve();
+
+  return db
+    .ref("schedule/events")
+    .set(eventsToFirebaseData())
+    .catch((err) => {
+      console.error(err);
+      alert("Firebase 일정 저장에 실패했습니다.");
+    });
+}
+
+async function loadEventsFromFirebase() {
+  const db = firebaseDb();
+  if (!db) return;
+
+  try {
+    const snapshot = await db.ref("schedule/events").once("value");
+    events = normalizeEvents(snapshot.val());
+    renderCalendar();
+  } catch (err) {
+    console.error(err);
+    alert("Firebase 일정을 불러오지 못했습니다.");
+  }
 }
 
 function pad(n) {
@@ -30,6 +90,43 @@ function toDateKey(y, m, d) {
 function parseDateKey(key) {
   const [y, m, d] = key.split("-").map(Number);
   return { y, m: m - 1, d };
+}
+
+function getEventEndDate(ev) {
+  return ev.endDate || ev.date;
+}
+
+function eventSpansDate(ev, dateKey) {
+  const endDate = getEventEndDate(ev);
+  return ev.date <= dateKey && dateKey <= endDate;
+}
+
+function isMultiDayEvent(ev) {
+  return ev.date !== getEventEndDate(ev);
+}
+
+function formatEventRange(ev) {
+  const endDate = getEventEndDate(ev);
+  if (ev.date === endDate) return ev.date;
+  return `${ev.date} ~ ${endDate}`;
+}
+
+function eventRangeClass(ev, dateKey, dayOfWeek) {
+  const endDate = getEventEndDate(ev);
+  if (ev.date === endDate) return "cal-day__event--single";
+
+  const classes = ["cal-day__event--range"];
+  if (dateKey === ev.date || dayOfWeek === 0) classes.push("cal-day__event--range-start");
+  if (dateKey === endDate || dayOfWeek === 6) classes.push("cal-day__event--range-end");
+  if (classes.length === 1) classes.push("cal-day__event--range-middle");
+  return classes.join(" ");
+}
+
+function eventRangeLabel(ev, dateKey, dayOfWeek) {
+  if (ev.date === getEventEndDate(ev) || dateKey === ev.date || dayOfWeek === 0) {
+    return escapeHtml(ev.title);
+  }
+  return "&nbsp;";
 }
 
 function formatDateTitle(key) {
@@ -52,12 +149,14 @@ function escapeHtml(str) {
 
 function eventsOnDate(dateKey) {
   return events
-    .filter((e) => e.date === dateKey)
+    .filter((e) => eventSpansDate(e, dateKey))
     .sort((a, b) => {
+      const rangeDiff = Number(isMultiDayEvent(b)) - Number(isMultiDayEvent(a));
+      if (rangeDiff) return rangeDiff;
       if (!a.time && !b.time) return 0;
       if (!a.time) return 1;
       if (!b.time) return -1;
-      return a.time.localeCompare(b.time);
+      return a.time.localeCompare(b.time) || a.date.localeCompare(b.date);
     });
 }
 
@@ -119,12 +218,18 @@ function renderCalendar() {
       ? `<span class="cal-day__holiday">${escapeHtml(getKrHolidayShort(holidayName))}</span>`
       : "";
 
-    const preview =
-      dayEvents.length > 0
-        ? `<span class="cal-day__preview">${escapeHtml(dayEvents[0].title)}${dayEvents.length > 1 ? ` +${dayEvents.length - 1}` : ""}</span>`
+    const visibleEvents = dayEvents.slice(0, 1);
+    const previews =
+      visibleEvents.length > 0
+        ? `<div class="cal-day__events">${visibleEvents
+            .map((ev) => {
+              const member = MEMBERS[ev.member] || MEMBERS.family;
+              return `<span class="cal-day__event ${eventRangeClass(ev, dateKey, dow)}" style="--member-color:${member.color}" title="${escapeHtml(ev.title)}">${eventRangeLabel(ev, dateKey, dow)}</span>`;
+            })
+            .join("")}${dayEvents.length > visibleEvents.length ? `<span class="cal-day__more">+${dayEvents.length - visibleEvents.length}</span>` : ""}</div>`
         : "";
 
-    btn.innerHTML = `<span class="cal-day__num">${d}</span>${holidayTag}${preview}`;
+    btn.innerHTML = `<span class="cal-day__num">${d}</span>${holidayTag}${previews}`;
     btn.appendChild(dots);
     btn.addEventListener("click", () => openDayModal(dateKey));
     grid.appendChild(btn);
@@ -156,6 +261,7 @@ function renderEventList() {
     .map((ev) => {
       const member = MEMBERS[ev.member] || MEMBERS.family;
       const time = ev.time ? ev.time.slice(0, 5) : "종일";
+      const range = formatEventRange(ev);
       return `
       <li>
         <button type="button" class="event-item" data-edit-id="${ev.id}"
@@ -163,7 +269,7 @@ function renderEventList() {
           <span class="event-item__time">${time}</span>
           <div class="event-item__body">
             <div class="event-item__title">${escapeHtml(ev.title)}</div>
-            <div class="event-item__meta">${member.name}${ev.memo ? " · " + escapeHtml(ev.memo) : ""}</div>
+            <div class="event-item__meta">${member.name} · ${escapeHtml(range)}${ev.memo ? " · " + escapeHtml(ev.memo) : ""}</div>
           </div>
         </button>
       </li>`;
@@ -179,6 +285,8 @@ function resetForm() {
   editingId = null;
   document.getElementById("eventId").value = "";
   document.getElementById("eventTitle").value = "";
+  document.getElementById("eventEndDate").value = selectedDate;
+  document.getElementById("eventEndDate").min = selectedDate;
   document.getElementById("eventTime").value = "";
   document.getElementById("eventMember").value = "family";
   document.getElementById("eventMemo").value = "";
@@ -194,6 +302,8 @@ function startEdit(id) {
   editingId = id;
   document.getElementById("eventId").value = id;
   document.getElementById("eventTitle").value = ev.title;
+  document.getElementById("eventEndDate").value = getEventEndDate(ev);
+  document.getElementById("eventEndDate").min = ev.date;
   document.getElementById("eventTime").value = ev.time || "";
   document.getElementById("eventMember").value = ev.member;
   document.getElementById("eventMemo").value = ev.memo || "";
@@ -210,9 +320,19 @@ function saveEventFromForm() {
     return;
   }
 
+  const existing = events.find((e) => e.id === editingId);
+  const startDate = existing?.date || selectedDate;
+  const endDate = document.getElementById("eventEndDate").value || startDate;
+  if (endDate < startDate) {
+    alert("종료일은 시작일보다 빠를 수 없습니다.");
+    document.getElementById("eventEndDate").focus();
+    return;
+  }
+
   const payload = {
     id: editingId || `ev-${Date.now()}`,
-    date: selectedDate,
+    date: startDate,
+    endDate,
     title,
     time: document.getElementById("eventTime").value || "",
     member: document.getElementById("eventMember").value,
@@ -288,3 +408,4 @@ document.getElementById("dayForm").addEventListener("submit", (e) => {
 });
 
 renderCalendar();
+loadEventsFromFirebase();
